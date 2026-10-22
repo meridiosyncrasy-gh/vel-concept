@@ -1,0 +1,45 @@
+name: Deploy VEL site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add site files (first run only)
+        run: |
+          if [ ! -f site/index.html ]; then
+            mkdir -p site
+            for i in 1 2 3; do
+              curl -fsSL -o part$i.zip "https://cdn.shopify.com/s/files/1/2654/5828/files/vel-site-part$i.zip?v=1792702374"
+              unzip -oq part$i.zip -d site
+            done
+            rm -f part*.zip
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add site
+            git commit -m "Add VEL static site"
+            git push
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4
