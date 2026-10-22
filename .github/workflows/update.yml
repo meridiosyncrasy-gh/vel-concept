@@ -1,0 +1,26 @@
+name: Apply VEL site update
+
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/update.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply update package
+        run: |
+          curl -fsSL -o update.zip "https://cdn.shopify.com/s/files/1/2654/5828/files/vel-site-update.zip?v=1792706751"
+          unzip -oq update.zip -d site
+          rm -f update.zip
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site
+          git commit -m "Add journal articles to VEL site" || echo "No changes"
+          git push
